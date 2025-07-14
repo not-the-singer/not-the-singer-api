@@ -5,7 +5,6 @@ export default async function handler(req, res) {
   const redirectUri = 'https://not-the-singer-api.vercel.app/api/soundcloud/callback';
   
   try {
-    // Exchange code for access token
     const tokenResponse = await fetch('https://api.soundcloud.com/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -20,10 +19,10 @@ export default async function handler(req, res) {
     
     const tokenData = await tokenResponse.json();
     
-    // For now, just show the token (in production you'd store it securely)
     res.json({ 
-      message: 'Success! Copy this access token:',
-      access_token: tokenData.access_token 
+      message: 'Success! Add these to your Vercel environment variables:',
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token  // This is what we need!
     });
     
   } catch (error) {
