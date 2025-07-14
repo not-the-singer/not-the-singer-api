@@ -10,7 +10,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://api.soundcloud.com/users/not-the-singer/tracks?client_id=vEx486GxbqAU2g0jtqYm3Vro4Lfc3Aty&limit=50`);
+    const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
+    
+    if (!clientId) {
+      throw new Error('SoundCloud client ID not configured');
+    }
+    
+    const response = await fetch(`https://api.soundcloud.com/users/not-the-singer/tracks?client_id=${clientId}&limit=50`);
     
     if (!response.ok) {
       throw new Error(`SoundCloud API returned ${response.status}`);
