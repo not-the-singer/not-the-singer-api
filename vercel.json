@@ -1,22 +1,16 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    }
-  ],
   "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x",
-      "memory": 1024,
-      "maxDuration": 10
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/soundcloud.js": {
+      "runtime": "edge"
+    },
+    "api/spotify.js": {
+      "runtime": "edge"
+    },
+    "api/songlink.js": {
+      "runtime": "edge"
     }
   }
 }

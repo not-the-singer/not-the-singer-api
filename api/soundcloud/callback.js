@@ -1,5 +1,10 @@
-export default async function handler(req, res) {
-  const { code } = req.query;
+import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url);
+  const code = searchParams.get('code');
   const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
   const clientSecret = process.env.SOUNDCLOUD_CLIENT_SECRET;
   const redirectUri = 'https://not-the-singer-api.vercel.app/api/soundcloud/callback';
@@ -19,13 +24,16 @@ export default async function handler(req, res) {
     
     const tokenData = await tokenResponse.json();
     
-    res.json({ 
+    return NextResponse.json({ 
       message: 'Success! Add these to your Vercel environment variables:',
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token  // This is what we need!
     });
     
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }

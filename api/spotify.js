@@ -1,13 +1,12 @@
-export default async function handler(req, res) {
-  // Set CORS headers for https://not-the-singer.com
-  res.setHeader('Access-Control-Allow-Origin', 'https://not-the-singer.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+import { NextResponse } from 'next/server';
+import { corsHeaders } from './lib/cors';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return NextResponse.json({}, { headers: corsHeaders });
   }
   
   const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`
+        'Authorization': `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`
       },
       body: 'grant_type=client_credentials'
     });
@@ -36,9 +35,12 @@ export default async function handler(req, res) {
 
     const albumsData = await albumsResponse.json();
 
-    res.status(200).json(albumsData.items);
+    return NextResponse.json(albumsData.items, { headers: corsHeaders });
   } catch (error) {
     console.error('Spotify API Error:', error);
-    res.status(500).json({ error: 'Failed to fetch albums' });
+    return NextResponse.json(
+      { error: 'Failed to fetch albums' },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
