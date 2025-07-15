@@ -1,18 +1,22 @@
-export default async function handler(req, res) {
-  // Set specific CORS headers for your domain
-  res.setHeader('Access-Control-Allow-Origin', 'https://not-the-singer.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+import { NextResponse } from 'next/server';
+import { corsHeaders } from './lib/cors';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return NextResponse.json({}, { headers: corsHeaders });
   }
 
-  const { spotifyUrl } = req.query;
+  const { searchParams } = new URL(req.url);
+  const spotifyUrl = searchParams.get('spotifyUrl');
   
   if (!spotifyUrl) {
-    return res.status(400).json({ error: 'Missing spotifyUrl parameter' });
+    return NextResponse.json(
+      { error: 'Missing spotifyUrl parameter' },
+      { status: 400, headers: corsHeaders }
+    );
   }
 
   try {
@@ -23,9 +27,12 @@ export default async function handler(req, res) {
     }
     
     const data = await response.json();
-    res.json(data);
+    return NextResponse.json(data, { headers: corsHeaders });
   } catch (error) {
     console.error('Songlink API error:', error);
-    res.status(500).json({ error: 'Failed to fetch from Songlink', details: error.message });
+    return NextResponse.json(
+      { error: 'Failed to fetch from Songlink', details: error.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
