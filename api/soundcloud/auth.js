@@ -1,9 +1,22 @@
-export default async function handler(req, res) {
+import { NextResponse } from 'next/server';
+import { corsHeaders } from '../lib/cors';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return NextResponse.json({}, { headers: corsHeaders });
+  }
+
   try {
     const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
     
     if (!clientId) {
-      return res.status(500).json({ error: 'SOUNDCLOUD_CLIENT_ID is not set' });
+      return NextResponse.json(
+        { error: 'SOUNDCLOUD_CLIENT_ID is not set' },
+        { status: 500, headers: corsHeaders }
+      );
     }
     
     const redirectUri = 'https://not-the-singer-api.vercel.app/api/soundcloud/callback';
@@ -14,10 +27,12 @@ export default async function handler(req, res) {
       `response_type=code&` +
       `scope=non-expiring`;
     
-    // Instead of using NextResponse.redirect, use standard res.redirect
-    res.redirect(307, authUrl);
+    return NextResponse.redirect(authUrl, { status: 307 });
   } catch (error) {
     console.error('Auth error:', error);
-    res.status(500).json({ error: error.message });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
