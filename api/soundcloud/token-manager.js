@@ -1,47 +1,17 @@
-const fs = require('fs').promises;
-const path = require('path');
-
-class TokenManager {
-  constructor() {
-    this.tokenPath = path.join(process.cwd(), 'data', 'soundcloud-tokens.json');
-  }
-
-  async loadTokens() {
-    try {
-      const data = await fs.readFile(this.tokenPath, 'utf8');
-      return JSON.parse(data);
-    } catch {
-      return null;
-    }
-  }
-
-  async saveTokens(tokens) {
-    await fs.mkdir(path.dirname(this.tokenPath), { recursive: true });
-    await fs.writeFile(this.tokenPath, JSON.stringify(tokens, null, 2));
-  }
-
+// Remove filesystem dependencies and just use env vars
+const TokenManager = {
   async refreshTokenIfNeeded() {
-    const tokens = await this.loadTokens();
-    
-    // If no tokens exist or access token is expired/near expiry
-    if (!tokens || this.isTokenExpired(tokens.access_token_expiry)) {
-      const newTokens = await this.refreshToken(tokens?.refresh_token);
-      await this.saveTokens(newTokens);
-      return newTokens.access_token;
-    }
-
-    return tokens.access_token;
-  }
-
-  isTokenExpired(expiryTime) {
-    // Check if token expires in less than 1 hour
-    return !expiryTime || new Date(expiryTime).getTime() - Date.now() < 3600000;
-  }
-
-  async refreshToken(refreshToken) {
+    return this.refreshToken();
+  },
+  
+  async refreshToken() {
+    const refreshToken = process.env.SOUNDCLOUD_REFRESH_TOKEN;
     const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
     const clientSecret = process.env.SOUNDCLOUD_CLIENT_SECRET;
-    refreshToken = refreshToken || process.env.SOUNDCLOUD_REFRESH_TOKEN;
+
+    if (!refreshToken || !clientId || !clientSecret) {
+      throw new Error('Missing required SoundCloud environment variables');
+    }
 
     const response = await fetch('https://api.soundcloud.com/oauth2/token', {
       method: 'POST',
@@ -61,13 +31,8 @@ class TokenManager {
     }
 
     const data = await response.json();
-    
-    return {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      access_token_expiry: new Date(Date.now() + data.expires_in * 1000).toISOString(),
-    };
+    return data.access_token;
   }
-}
+};
 
-module.exports = new TokenManager();
+export default TokenManager;

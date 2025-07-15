@@ -1,4 +1,8 @@
-export default async function handler(req, res) {
+import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
   const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
   const redirectUri = 'https://not-the-singer-api.vercel.app/api/soundcloud/callback';
   
@@ -8,5 +12,5 @@ export default async function handler(req, res) {
     `response_type=code&` +
     `scope=non-expiring`;
   
-  res.redirect(authUrl);
+  return NextResponse.redirect(authUrl);
 }

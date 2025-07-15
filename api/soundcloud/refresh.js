@@ -1,31 +1,38 @@
+import { NextResponse } from 'next/server';
 import TokenManager from './token-manager';
+import { corsHeaders } from '../lib/cors';
 
-export default async function handler(req, res) {
-  // Set CORS headers for https://not-the-singer.com
-  res.setHeader('Access-Control-Allow-Origin', 'https://not-the-singer.com');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+export const runtime = 'edge';
+
+export default async function handler(req) {
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return NextResponse.json({}, { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return NextResponse.json(
+      { error: 'Method not allowed' },
+      { status: 405, headers: corsHeaders }
+    );
   }
 
   try {
-    const newTokens = await TokenManager.refreshToken();
-    await TokenManager.saveTokens(newTokens);
+    const accessToken = await TokenManager.refreshToken();
     
-    res.status(200).json({ 
-      success: true,
-      message: 'Token refreshed and saved successfully'
-    });
+    return NextResponse.json(
+      { 
+        success: true,
+        message: 'Token refreshed successfully',
+        access_token: accessToken
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('Token refresh error:', error);
-    res.status(500).json({ error: 'Failed to refresh token' });
+    return NextResponse.json(
+      { error: 'Failed to refresh token' },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }

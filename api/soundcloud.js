@@ -1,13 +1,13 @@
+import { NextResponse } from 'next/server';
 import TokenManager from './soundcloud/token-manager';
+import { corsHeaders } from './lib/cors';
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', 'https://not-the-singer.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+export const runtime = 'edge';
+
+export default async function handler(req) {
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return NextResponse.json({}, { headers: corsHeaders });
   }
 
   try {
@@ -24,12 +24,15 @@ export default async function handler(req, res) {
     }
     
     const data = await response.json();
-    res.json(data);
+    return NextResponse.json(data, { headers: corsHeaders });
   } catch (error) {
     console.error('SoundCloud API error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch from SoundCloud', 
-      details: error.message 
-    });
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch from SoundCloud', 
+        details: error.message 
+      },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
