@@ -1,6 +1,7 @@
 {
   "name": "not-the-singer-api",
   "version": "1.0.0",
+  "type": "module",
   "description": "API for not-the-singer website",
   "main": "index.js",
   "scripts": {
