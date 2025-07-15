@@ -4,38 +4,6 @@ import { corsHeaders } from './lib/cors';
 
 export const runtime = 'edge';
 
-let cachedToken = null;
-let tokenExpiry = null;
-
-async function getAccessToken() {
-  // If we have a cached token that's not expired, use it
-  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
-    return cachedToken;
-  }
-
-  // Otherwise, get a new token
-  const response = await fetch('/api/soundcloud/token');
-  const data = await response.json();
-  
-  // Cache the new token and set expiry
-  cachedToken = data.access_token;
-  tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // Subtract 1 minute for safety
-  
-  return cachedToken;
-}
-
-export async function callSoundCloudApi(endpoint) {
-  const token = await getAccessToken();
-  
-  const response = await fetch(`https://api.soundcloud.com${endpoint}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  
-  return response.json();
-}
-
 export default async function handler(req) {
   // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {

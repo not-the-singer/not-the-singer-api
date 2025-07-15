@@ -1,9 +1,23 @@
-export default async function handler(req, res) {
+import { NextResponse } from 'next/server';
+import { corsHeaders } from '../lib/cors';
+
+export const runtime = 'edge';
+
+export default async function handler(req) {
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return NextResponse.json({}, { headers: corsHeaders });
+  }
+
   try {
-    const { code } = req.query;
+    const url = new URL(req.url);
+    const code = url.searchParams.get('code');
     
     if (!code) {
-      return res.status(400).json({ error: 'No authorization code provided' });
+      return NextResponse.json(
+        { error: 'No authorization code provided' },
+        { status: 400, headers: corsHeaders }
+      );
     }
 
     const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
@@ -28,19 +42,28 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const error = await response.text();
       console.error('Token exchange error:', error);
-      return res.status(500).json({ error: 'Failed to exchange code for tokens' });
+      return NextResponse.json(
+        { error: 'Failed to exchange code for tokens' },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     const data = await response.json();
     
     // Return the tokens in a readable format
-    return res.status(200).json({
-      message: 'Authorization successful! Here are your tokens:',
-      refresh_token: data.refresh_token,
-      access_token: data.access_token,
-    });
+    return NextResponse.json(
+      {
+        message: 'Authorization successful! Here are your tokens:',
+        refresh_token: data.refresh_token,
+        access_token: data.access_token,
+      },
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('Callback error:', error);
-    return res.status(500).json({ error: error.message });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
