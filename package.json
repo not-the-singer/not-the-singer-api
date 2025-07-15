@@ -1,0 +1,18 @@
+{
+  "name": "not-the-singer-api",
+  "version": "1.0.0",
+  "description": "API for not-the-singer website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/not-the-singer/not-the-singer-api.git"
+  },
+  "author": "not-the-singer",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/node": "^2.15.1"
+  }
+}
