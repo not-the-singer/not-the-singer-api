@@ -1,23 +1,46 @@
-const fs = require('fs').promises;
-const path = require('path');
+import { kv } from '@vercel/kv';
 
 class TokenManager {
   constructor() {
-    this.tokenPath = path.join(process.cwd(), 'data', 'soundcloud-tokens.json');
+    this.tokenKey = 'soundcloud:tokens';
   }
 
   async loadTokens() {
     try {
-      const data = await fs.readFile(this.tokenPath, 'utf8');
-      return JSON.parse(data);
-    } catch {
+      // Try to load from KV store first
+      const tokens = await kv.get(this.tokenKey);
+      if (tokens) {
+        return tokens;
+      }
+      
+      // Fallback to environment variables if KV is not available
+      const accessToken = process.env.SOUNDCLOUD_ACCESS_TOKEN;
+      const refreshToken = process.env.SOUNDCLOUD_REFRESH_TOKEN;
+      const expiry = process.env.SOUNDCLOUD_TOKEN_EXPIRY;
+      
+      if (accessToken && refreshToken) {
+        return {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          access_token_expiry: expiry || null
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error loading tokens:', error);
       return null;
     }
   }
 
   async saveTokens(tokens) {
-    await fs.mkdir(path.dirname(this.tokenPath), { recursive: true });
-    await fs.writeFile(this.tokenPath, JSON.stringify(tokens, null, 2));
+    try {
+      await kv.set(this.tokenKey, tokens);
+    } catch (error) {
+      console.error('Error saving tokens to KV:', error);
+      // KV might not be available in development or if not configured
+      // This is acceptable as tokens can be managed via environment variables
+    }
   }
 
   async refreshTokenIfNeeded() {
@@ -42,6 +65,10 @@ class TokenManager {
     const clientId = process.env.SOUNDCLOUD_CLIENT_ID;
     const clientSecret = process.env.SOUNDCLOUD_CLIENT_SECRET;
     refreshToken = refreshToken || process.env.SOUNDCLOUD_REFRESH_TOKEN;
+
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
 
     const response = await fetch('https://api.soundcloud.com/oauth2/token', {
       method: 'POST',
@@ -70,4 +97,4 @@ class TokenManager {
   }
 }
 
-module.exports = new TokenManager();
+export default new TokenManager();
