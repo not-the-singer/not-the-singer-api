@@ -13,6 +13,7 @@
   "author": "not-the-singer",
   "license": "ISC",
   "dependencies": {
-    "@vercel/node": "^2.15.1"
+    "@vercel/node": "^3.0.0",
+    "next": "^13.4.0"
   }
 }
